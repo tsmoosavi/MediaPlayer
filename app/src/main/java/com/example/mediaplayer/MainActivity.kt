@@ -9,16 +9,39 @@ import android.os.Bundle
 import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.PackageManagerCompat.LOG_TAG
 import com.example.mediaplayer.databinding.ActivityMainBinding
 import com.google.android.material.snackbar.Snackbar
 import java.io.IOException
-
+private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
 class MainActivity : AppCompatActivity() {
+    private var player: MediaPlayer? = null
+    private var permissionToRecordAccepted = false
+    private var permissions: Array<String> = arrayOf(Manifest.permission.RECORD_AUDIO)
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        permissionToRecordAccepted = if (requestCode == REQUEST_RECORD_AUDIO_PERMISSION) {
+            grantResults[0] == PackageManager.PERMISSION_GRANTED
+        } else {
+            false
+        }
+        if (!permissionToRecordAccepted){
+            Toast.makeText(this, "no permission", Toast.LENGTH_SHORT).show()
+//            finish()
+        }
+
+    }
     private var recorder: MediaRecorder? = null
     private var fileName: String = ""
     val url = "https://dl.nicmusic.net/nicmusic/024/004/Dil%20Ki%20Hai%20Tamanna.mp3" // your URL here
@@ -58,19 +81,36 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
         fileName = "${externalCacheDir?.absolutePath}/audiorecordtest.3gp"
-        binding.playButton.setOnClickListener{
+        binding.playButton.setOnClickListener {
             playMedia()
             Toast.makeText(this, mediaPlayer.duration.toString(), Toast.LENGTH_SHORT).show()
         }
-        binding.pauseButton.setOnClickListener{
+        binding.pauseButton.setOnClickListener {
             pauseMedia()
         }
         showProgressBar()
-        binding.recordButton.setOnClickListener{
-            requestPermissions()
+        binding.recordButton.setOnClickListener {
+            ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
             startRecording()
         }
+        binding.stopRecordButton.setOnClickListener {
+            stopRecording()
+        }
+        binding.playRecordButton.setOnClickListener{
+            startPlaying()
+        }
+    }
 
+    private fun startPlaying() {
+        player = MediaPlayer().apply {
+            try {
+                setDataSource(fileName)
+                prepare()
+                start()
+            } catch (e: IOException) {
+//                Log.e(LOG_TAG, "prepare() failed")
+            }
+        }
     }
 
     private fun showProgressBar() {
@@ -101,54 +141,17 @@ class MainActivity : AppCompatActivity() {
             start()
         }
     }
-    private fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            when {
-                //if user already granted the permission
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    Toast.makeText(
-                        this,
-                        "you have already granted this permission",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                //if user already denied the permission once
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-                ) -> {
-                    //you can show rational massage in any form you want
-                    showRationDialog()
-                    Snackbar.make(
-                        binding.recordButton,
-                        "are you sure?",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                }
-                else -> {
-                    requestPermissionLauncher.launch(
-                        Manifest.permission.RECORD_AUDIO,
-                    )
-                }
-            }
+
+    private fun stopRecording() {
+        recorder?.apply {
+            stop()
+            release()
         }
-    }
-    private fun showRationDialog() {
-        val builder= AlertDialog.Builder(this)
-        builder.apply {
-            setMessage("Are you sure you want to record your audio?")
-            setTitle("permission required")
-            setPositiveButton("ok"){dialog,which->
-                requestPermissionLauncher.launch(
-                    Manifest.permission.CAMERA,
-                )
-            }
-        }
-        builder.create().show()
+        recorder = null
     }
 
 
 }
+
+
+
