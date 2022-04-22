@@ -67,8 +67,16 @@ class MainActivity : AppCompatActivity() {
         }
         showProgressBar()
         binding.recordButton.setOnClickListener{
-            requestPermissions()
-            startRecording()
+            if (ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED && ContextCompat.checkSelfPermission(this,
+                    Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                val permissions = arrayOf(android.Manifest.permission.RECORD_AUDIO,
+                    android.Manifest.permission.WRITE_EXTERNAL_STORAGE, android.Manifest.permission.READ_EXTERNAL_STORAGE)
+                ActivityCompat.requestPermissions(this, permissions,0)
+            }else{
+                startRecording()
+            }
+
         }
 
     }
@@ -100,54 +108,6 @@ class MainActivity : AppCompatActivity() {
 
             start()
         }
-    }
-    private fun requestPermissions() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            when {
-                //if user already granted the permission
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    Toast.makeText(
-                        this,
-                        "you have already granted this permission",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-                //if user already denied the permission once
-                ActivityCompat.shouldShowRequestPermissionRationale(
-                    this,
-                    Manifest.permission.RECORD_AUDIO
-                ) -> {
-                    //you can show rational massage in any form you want
-                    showRationDialog()
-                    Snackbar.make(
-                        binding.recordButton,
-                        "are you sure?",
-                        Snackbar.LENGTH_LONG
-                    ).show()
-                }
-                else -> {
-                    requestPermissionLauncher.launch(
-                        Manifest.permission.RECORD_AUDIO,
-                    )
-                }
-            }
-        }
-    }
-    private fun showRationDialog() {
-        val builder= AlertDialog.Builder(this)
-        builder.apply {
-            setMessage("Are you sure you want to record your audio?")
-            setTitle("permission required")
-            setPositiveButton("ok"){dialog,which->
-                requestPermissionLauncher.launch(
-                    Manifest.permission.CAMERA,
-                )
-            }
-        }
-        builder.create().show()
     }
 
 
