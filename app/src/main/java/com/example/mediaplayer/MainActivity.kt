@@ -56,24 +56,6 @@ class MainActivity : AppCompatActivity() {
         prepare() // might take long! (for buffering, etc)
     }
     lateinit var binding: ActivityMainBinding
-    private val requestPermissionLauncher =
-        registerForActivityResult(
-            ActivityResultContracts.RequestPermission()
-        ) { isGranted: Boolean ->
-            if (isGranted) {
-                Toast.makeText(
-                    this,
-                    "you granted this permission",
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Toast.makeText(
-                    this,
-                    "you denied this permission",
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -88,7 +70,7 @@ class MainActivity : AppCompatActivity() {
         binding.pauseButton.setOnClickListener {
             pauseMedia()
         }
-        showProgressBar()
+//        showProgressBar()
         binding.recordButton.setOnClickListener {
             ActivityCompat.requestPermissions(this, permissions, REQUEST_RECORD_AUDIO_PERMISSION)
             startRecording()
@@ -113,10 +95,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showProgressBar() {
-        binding.seekBar.max = mediaPlayer.duration
-        binding.seekBar.progress = mediaPlayer.currentPosition
-    }
+//    private fun showProgressBar() {
+//        binding.seekBar.max = mediaPlayer.duration
+//        binding.seekBar.progress = mediaPlayer.currentPosition
+//    }
 
     private fun pauseMedia() {
        mediaPlayer.pause()
